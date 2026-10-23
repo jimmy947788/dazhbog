@@ -1,5 +1,15 @@
+# syntax=docker/dockerfile:1.7
+
+# Raspberry Pi 5 (BCM2712, Cortex-A76) runs aarch64 userspace. Both stages are
+# pinned to linux/arm64 so the image matches that architecture.
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+
 # Build stage - use bookworm-based rust image to match runtime glibc
-FROM rust:1.91-slim-bookworm as builder
+FROM --platform=linux/arm64 rust:1.91-slim-bookworm as builder
+
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
 
 WORKDIR /app
 
@@ -14,11 +24,12 @@ COPY Cargo.toml Cargo.lock ./
 # Copy source code
 COPY src ./src
 
-# Build for release
-RUN cargo build --locked --release --bin dazhbog --bin dazhbog-recover
+# Build for release. Only the two binaries copied into the runtime image.
+RUN echo "Building on ${BUILDPLATFORM:-unknown} for linux/arm64 (requested ${TARGETPLATFORM:-unset})" && \
+    cargo build --locked --release --bin dazhbog --bin dazhbog-recover
 
 # Runtime stage - must match builder's glibc version
-FROM debian:bookworm-slim
+FROM --platform=linux/arm64 debian:bookworm-slim
 
 WORKDIR /app
 

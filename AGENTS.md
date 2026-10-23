@@ -214,8 +214,10 @@ Revalidate these facts when changing their owning files:
   no `autotests = false` contract or manual `[[test]]` registry to copy from RAX.
 - No tracked CI workflow currently establishes a tested platform matrix.
   Local validation commands here are requirements, not claims of existing CI.
-- The Docker builder currently uses `rust:1.91-slim-bookworm`; the runtime uses
-  Debian Bookworm. An image tag does not prove the locked graph builds there.
+- The Docker builder uses `rust:1.91-slim-bookworm` and the runtime uses
+  `debian:bookworm-slim`. Both stages are pinned to `linux/arm64` (aarch64),
+  the Raspberry Pi 5 userspace architecture. An image tag does not prove the
+  locked graph builds there.
 - `config.toml` is a local ignored configuration. Inspect it before use; it can
   enable public binds, real upstreams, credential paths, and hello dumps.
 
@@ -2021,11 +2023,12 @@ commands do not start against real data.
 
 ```sh
 docker compose config
-docker build -t dazhbog-agent-check .
+docker build --platform linux/arm64 -t dazhbog-agent-check .
 ```
 
-The Dockerfile builds the locked `dazhbog` and `dazhbog-recover` targets and copies
-those exact artifacts. `.dockerignore` restricts context to source, manifests,
+The Dockerfile pins the builder and runtime stages to `linux/arm64` and builds
+the locked `dazhbog` and `dazhbog-recover` targets, then copies those exact
+artifacts. `.dockerignore` restricts context to source, manifests,
 Docker instructions and the local configuration; data, research and build outputs
 are excluded. The copied local configuration remains part of the built image.
 
